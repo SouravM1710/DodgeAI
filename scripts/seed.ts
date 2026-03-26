@@ -1,18 +1,3 @@
-/**
- * Seed script: walks data/raw/ recursively, reads all .jsonl and .csv files,
- * maps them to the correct table by folder/filename keywords, and ingests
- * into SQLite with fuzzy field matching.
- *
- * Run with: npx tsx scripts/seed.ts
- *
- * Supported layout examples:
- *   data/raw/SalesOrder/sales_order_header.jsonl
- *   data/raw/SalesOrder/sales_order_items.jsonl
- *   data/raw/Delivery/delivery.jsonl
- *   data/raw/BillingDocument/billing.jsonl
- *   data/raw/JournalEntry/journal_entry.jsonl
- *   data/raw/customers.csv   ← flat files also work
- */
 
 import Database from 'better-sqlite3';
 import { parse as parseCsv } from 'csv-parse/sync';
@@ -32,18 +17,15 @@ if (fs.existsSync(DB_PATH)) {
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = OFF'); // disabled during seed - re-enabled at end
+db.pragma('foreign_keys = OFF');
 initSchema(db);
 console.log('✅ Schema initialized\n');
 
 // ─── File discovery ───────────────────────────────────────────────────────────
 
 interface DiscoveredFile {
-  /** Absolute path to the file */
   filepath: string;
-  /** Relative path from RAW_DIR, e.g. "SalesOrder/header.jsonl" */
   relpath: string;
-  /** Lowercase version of the full relative path for keyword matching */
   lower: string;
   ext: 'jsonl' | 'csv';
 }
@@ -107,28 +89,21 @@ function readFile(f: DiscoveredFile): Row[] {
 
 // ─── Field helpers ────────────────────────────────────────────────────────────
 
-/** Normalize a key for fuzzy matching: lowercase, strip spaces/underscores/dashes */
 function norm(s: string): string {
   return s.toLowerCase().replace(/[\s_\-\.]/g, '');
 }
 
-/**
- * Find a field value in a row by trying multiple candidate names.
- * Works with nested objects too — e.g. candidates like "header.SalesOrder"
- * will drill into row.header.SalesOrder.
- */
 function col(row: Row, ...candidates: string[]): string | null {
-  // First try flat keys
   const keys = Object.keys(row);
   for (const candidate of candidates) {
-    // Direct normalized match on flat keys
+
     const found = keys.find(k => norm(k) === norm(candidate));
     if (found !== undefined) {
       const val = row[found];
       if (val === null || val === undefined) continue;
       return String(val);
     }
-    // Try dotted path e.g. "SalesOrderHeader.SalesOrder"
+
     if (candidate.includes('.')) {
       const parts = candidate.split('.');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,7 +120,7 @@ function col(row: Row, ...candidates: string[]): string | null {
     }
   }
 
-  // If the row itself has nested objects, search one level deep
+
   for (const candidate of candidates) {
     for (const key of keys) {
       const val = row[key];
@@ -180,10 +155,7 @@ function safeNum(val: string | null | undefined): number | null {
 
 // ─── File classifier ──────────────────────────────────────────────────────────
 
-/**
- * Classify a file into an entity type based on folder name + filename keywords.
- * Returns null if it doesn't match any known entity.
- */
+
 type EntityType =
   | 'customers'
   | 'products'
@@ -203,24 +175,20 @@ const ENTITY_KEYWORDS: Record<EntityType, string[]> = {
   deliveries:         ['deliver', 'shipment', 'dispatch', 'outbounddelivery', 'delivery_header'],
   delivery_items:     ['deliveryitem', 'delivery_item', 'shipitem'],
   billing_documents:  ['billing', 'invoice', 'billingdoc', 'billing_doc', 'billdoc', 'invoicedoc'],
-  // Dataset uses `billing_document_items/*` naming, so include `billingdocumentitem(s)` too.
   billing_items:      ['billingitem', 'billing_item', 'invoiceitem', 'invoice_item', 'billingdocumentitem', 'billingdocumentitems'],
   journal_entries:    ['journal', 'journalentry', 'accounting', 'ledger', 'glentry', 'gl_entry', 'financ', 'accountingdoc'],
 };
 
 function classifyFile(f: DiscoveredFile): EntityType | null {
-  // Some source files share keywords with richer "header" files but do not contain
-  // the same fields (e.g. schedule lines overwrite header fields because we use
-  // INSERT OR REPLACE). Skip those to preserve referential data.
+
   const rel = f.lower;
   if (rel.includes('sales_order_schedule_lines')) return null;
-  // Cancellations may miss reference fields needed to populate delivery/sales order links.
+
   if (rel.includes('billing_document_cancellations')) return null;
 
-  // Use the full relative path (folder + filename) for matching
-  const searchStr = f.lower.replace(/[\/\\_\-\.]/g, '');
+  const searchStr = f.lower.replace(/[\/\\\\_\\-\\.]/g, '');
 
-  // Score each entity type by how many of its keywords appear in the path
+
   let bestType: EntityType | null = null;
   let bestScore = 0;
 
@@ -228,7 +196,7 @@ function classifyFile(f: DiscoveredFile): EntityType | null {
     let score = 0;
     for (const kw of keywords) {
       if (searchStr.includes(kw.toLowerCase().replace(/[_\-]/g, ''))) {
-        // Longer keyword = more specific = higher score
+
         score += kw.length;
       }
     }
@@ -238,7 +206,7 @@ function classifyFile(f: DiscoveredFile): EntityType | null {
     }
   }
 
-  // Require minimum match confidence
+
   return bestScore >= 4 ? bestType : null;
 }
 
@@ -470,8 +438,6 @@ function loadEntity(entity: EntityType): Row[] {
         const delId = col(r, 'DeliveryDocument', 'Delivery', 'deliverydocument', 'delivery', 'deliveryid');
         if (!delId) continue;
 
-        // In the raw dataset, delivery_items references the originating sales order + sales order item,
-        // but does not directly contain `material`. We'll resolve product_id after sales_order_items is loaded.
         const salesOrderIdRaw = col(r, 'referenceSdDocument', 'ReferenceSdDocument', 'ReferenceSDDocument', 'salesorder', 'salesorderid');
         const salesOrderItemRaw = col(r, 'referenceSdDocumentItem', 'ReferenceSdDocumentItem', 'ReferenceSDDocumentItem', 'salesorderitem', 'itemnumber');
         const salesOrderItemNorm = salesOrderItemRaw ? salesOrderItemRaw.replace(/^0+/, '') : null;
@@ -490,8 +456,7 @@ function loadEntity(entity: EntityType): Row[] {
     insertMany(rows);
     console.log(`   ✅ ${rows.length} rows processed\n`);
 
-    // Resolve delivery_items.product_id by joining back to sales_order_items using:
-    // delivery_items.sales_order_id + delivery_items.sales_order_item (normalized).
+
     db.exec(`
       UPDATE delivery_items
       SET product_id = (
@@ -506,7 +471,7 @@ function loadEntity(entity: EntityType): Row[] {
         AND sales_order_item IS NOT NULL;
     `);
 
-    // Populate deliveries.sales_order_id and deliveries.customer_id from delivery_items and sales_orders.
+
     db.exec(`
       UPDATE deliveries
       SET sales_order_id = (
@@ -578,8 +543,6 @@ function loadEntity(entity: EntityType): Row[] {
   console.log('🧾 Billing Items');
   const rows = loadEntity('billing_items');
   if (rows.length > 0) {
-    // We use `billing_document_items.referenceSdDocument` to link billing_documents back to deliveries and/or sales orders.
-    // Those reference fields are not persisted in `billing_items`, so we cache them here for a post-insert update.
     const billingRefsByBill = new Map<string, Set<string>>();
 
     const stmt = db.prepare(`
@@ -619,7 +582,7 @@ function loadEntity(entity: EntityType): Row[] {
     insertMany(rows);
     console.log(`   ✅ ${rows.length} rows processed\n`);
 
-    // Update billing_documents foreign keys (sales_order_id / delivery_id) using cached references.
+
     const deliveryIdSet = new Set(
       db.prepare(`SELECT delivery_id FROM deliveries`).all().map((r: { delivery_id: string }) => String(r.delivery_id))
     );
@@ -647,7 +610,7 @@ function loadEntity(entity: EntityType): Row[] {
       updateBilling.run(salesOrderId, deliveryId, billId);
     }
 
-    // If billing_documents got a delivery_id but not a sales_order_id, fill it from deliveries.
+
     db.exec(`
       UPDATE billing_documents
       SET sales_order_id = (
@@ -731,10 +694,10 @@ for (const t of tables) {
   }
 }
 
-// Re-enable FK enforcement now that all data is loaded
+
 db.pragma('foreign_keys = ON');
 
-// Quick sanity check — warn about orphaned rows but don't fail
+
 console.log('\n🔍 Referential integrity check:');
 const checks = [
   { label: 'SO items → sales_orders',      sql: "SELECT COUNT(*) as c FROM sales_order_items WHERE sales_order_id NOT IN (SELECT sales_order_id FROM sales_orders)" },
@@ -746,7 +709,7 @@ for (const { label, sql } of checks) {
   try {
     const orphans = (db.prepare(sql).get() as { c: number }).c;
     console.log('   ' + label.padEnd(35) + ' ' + (orphans === 0 ? '✅ OK' : '⚠️  ' + orphans + ' orphans (data gap, not an error)'));
-  } catch { /* skip */ }
+  } catch { }
 }
 
 db.close();

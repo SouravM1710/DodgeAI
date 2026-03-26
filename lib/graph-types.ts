@@ -1,7 +1,3 @@
-/**
- * Client-safe graph types and constants.
- * No server imports here — this file is safe to use in 'use client' components.
- */
 
 export interface GraphNode {
   id: string;

@@ -4,10 +4,7 @@ export { NODE_COLORS, NODE_LABELS } from './graph-types';
 import type { GraphNode, GraphData, GraphEdge } from './graph-types';
 import { NODE_COLORS } from './graph-types';
 
-/**
- * Build a sampled graph for visualization.
- * For large datasets, we sample to keep the UI responsive.
- */
+
 export function buildGraph(
   options: {
     maxNodes?: number;
@@ -37,14 +34,12 @@ export function buildGraph(
   }
 
   if (focusId) {
-    // Build ego-graph around a specific node
     buildEgoGraph(db, focusId, addNode, addLink, nodeIds, maxNodes);
   } else {
-    // Build sampled overview graph
     buildOverviewGraph(db, maxNodes, addNode, addLink, nodeIds);
   }
 
-  // Get stats
+
   const stats = {
     customers: (db.prepare('SELECT COUNT(*) as c FROM customers').get() as { c: number }).c,
     sales_orders: (db.prepare('SELECT COUNT(*) as c FROM sales_orders').get() as { c: number }).c,
@@ -68,7 +63,7 @@ function buildOverviewGraph(
   addLink: (s: string, t: string, l: string) => void,
   nodeIds: Set<string>
 ) {
-  // Keep the graph connected by sampling downstream entities from upstream IDs.
+
   const customersLimit = Math.max(1, Math.floor(maxNodes * 0.15));
   const ordersLimit = Math.max(5, Math.floor(maxNodes * 0.25));
   const deliveriesLimit = Math.max(5, Math.floor(maxNodes * 0.18));
@@ -76,7 +71,7 @@ function buildOverviewGraph(
   const journalsLimit = Math.max(5, Math.floor(maxNodes * 0.10));
   const productsLimit = Math.max(10, Math.floor(maxNodes * 0.25));
 
-  // Customers
+
   const customers = db.prepare(
     `SELECT customer_id, customer_name, city, country, industry
      FROM customers
@@ -96,7 +91,7 @@ function buildOverviewGraph(
 
   if (customerIds.length === 0) return;
 
-  // Sales Orders
+
   const orders = db.prepare(
     `SELECT so.*, c.customer_name
      FROM sales_orders so
@@ -119,7 +114,7 @@ function buildOverviewGraph(
 
   if (salesOrderIds.length === 0) return;
 
-  // Deliveries
+
   const deliveries = db.prepare(
     `SELECT *
      FROM deliveries
@@ -139,7 +134,7 @@ function buildOverviewGraph(
     addLink(`so_${d.sales_order_id}`, `del_${d.delivery_id}`, 'fulfilled_by');
   }
 
-  // Billing documents (two pathways: via delivery_id and via sales_order_id when delivery_id is NULL)
+
   const billingsByDelivery = deliveryIds.length > 0
     ? (db.prepare(
         `SELECT *
@@ -178,7 +173,7 @@ function buildOverviewGraph(
   }
 
   if (billingIds.length > 0) {
-    // Journal entries
+
     const journals = db.prepare(
       `SELECT *
        FROM journal_entries
@@ -198,7 +193,7 @@ function buildOverviewGraph(
     }
   }
 
-  // Products and product links
+
   const soItemRows = db.prepare(
     `SELECT sales_order_id, product_id
      FROM sales_order_items
@@ -249,7 +244,7 @@ function buildOverviewGraph(
       });
     }
 
-    // Link orders/deliveries/billings to products
+
     for (const r of soItemRows) {
       if (!r.product_id) continue;
       addLink(`so_${r.sales_order_id}`, `prod_${r.product_id}`, 'ordered_product');
@@ -273,7 +268,7 @@ function buildEgoGraph(
   nodeIds: Set<string>,
   maxNodes: number
 ) {
-  // Detect type from prefix or by querying all tables
+
   const [prefix, ...rest] = focusId.split('_');
   const rawId = rest.join('_');
 
@@ -313,7 +308,7 @@ function expandDelivery(
   const deliveryId = d.delivery_id as string;
   addNode({ id: `del_${deliveryId}`, label: `DEL ${deliveryId}`, type: 'delivery', data: d, val: 6 });
 
-  // Upstream sales order + customer
+
   if (d.sales_order_id) {
     const o = db.prepare('SELECT * FROM sales_orders WHERE sales_order_id = ?').get(d.sales_order_id) as Record<string, unknown> | undefined;
     if (o) {
@@ -333,11 +328,11 @@ function expandDelivery(
     if (c) addNode({ id: `cust_${c.customer_id}`, label: String(c.customer_name || c.customer_id), type: 'customer', data: c, val: 4 });
   }
 
-  // Billing documents from this delivery
+
   const bills = db.prepare('SELECT * FROM billing_documents WHERE delivery_id = ? LIMIT 50').all(deliveryId) as Array<Record<string, unknown>>;
   for (const b of bills) expandBilling(db, b, addNode, addLink, nodeIds);
 
-  // Products associated to this delivery
+
   const items = db.prepare(
     `SELECT product_id
      FROM delivery_items
@@ -391,7 +386,7 @@ function expandProduct(
   const productId = p.product_id as string;
   addNode({ id: `prod_${productId}`, label: String(p.product_name || productId), type: 'product', data: p, val: 6 });
 
-  // Orders containing product
+
   const soRows = db.prepare(
     `SELECT DISTINCT sales_order_id
      FROM sales_order_items
@@ -415,7 +410,7 @@ function expandProduct(
     }
   }
 
-  // Deliveries containing product
+
   const delRows = db.prepare(
     `SELECT DISTINCT delivery_id
      FROM delivery_items
@@ -431,7 +426,7 @@ function expandProduct(
     addLink(`del_${d.delivery_id}`, `prod_${productId}`, 'delivered_product');
   }
 
-  // Billing containing product
+
   const billRows = db.prepare(
     `SELECT DISTINCT billing_id
      FROM billing_items
@@ -445,7 +440,6 @@ function expandProduct(
     if (!b) continue;
     addNode({ id: `bill_${b.billing_id}`, label: `BILL ${b.billing_id}`, type: 'billing', data: b, val: 3 });
     addLink(`bill_${b.billing_id}`, `prod_${productId}`, 'billed_product');
-    // journal entries are handled by expandBilling when user expands billing node
   }
 }
 
@@ -458,7 +452,7 @@ function expandOrder(
 ) {
   addNode({ id: `so_${o.sales_order_id}`, label: `SO ${o.sales_order_id}`, type: 'sales_order', data: o, val: 5 });
 
-  // Customer
+
   if (o.customer_id) {
     const c = db.prepare('SELECT * FROM customers WHERE customer_id = ?').get(o.customer_id as string) as Record<string, unknown> | undefined;
     if (c) {
@@ -467,25 +461,25 @@ function expandOrder(
     }
   }
 
-  // Deliveries
+
   const deliveries = db.prepare('SELECT * FROM deliveries WHERE sales_order_id = ?').all(o.sales_order_id as string) as Array<Record<string, unknown>>;
   for (const d of deliveries) {
     addNode({ id: `del_${d.delivery_id}`, label: `DEL ${d.delivery_id}`, type: 'delivery', data: d, val: 4 });
     addLink(`so_${o.sales_order_id}`, `del_${d.delivery_id}`, 'fulfilled_by');
 
-    // Billings from delivery
+
     const bills = db.prepare('SELECT * FROM billing_documents WHERE delivery_id = ?').all(d.delivery_id as string) as Array<Record<string, unknown>>;
     for (const b of bills) expandBilling(db, b, addNode, addLink, nodeIds);
   }
 
-  // Direct billings
+
   const directBills = db.prepare('SELECT * FROM billing_documents WHERE sales_order_id = ? AND delivery_id IS NULL').all(o.sales_order_id as string) as Array<Record<string, unknown>>;
   for (const b of directBills) {
     addNode({ id: `bill_${b.billing_id}`, label: `BILL ${b.billing_id}`, type: 'billing', data: b, val: 3 });
     addLink(`so_${o.sales_order_id}`, `bill_${b.billing_id}`, 'billed_as');
   }
 
-  // Products ordered in this sales order
+
   const items = db.prepare(
     `SELECT product_id
      FROM sales_order_items
@@ -519,12 +513,11 @@ function expandBilling(
   b: Record<string, unknown>,
   addNode: (n: GraphNode) => void,
   addLink: (s: string, t: string, l: string) => void,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _nodeIds: Set<string>
 ) {
   addNode({ id: `bill_${b.billing_id}`, label: `BILL ${b.billing_id}`, type: 'billing', data: b, val: 4 });
 
-  // Upstream delivery (if present) so `del -> bill` edge can render.
+
   if (b.delivery_id) {
     const d = db.prepare('SELECT * FROM deliveries WHERE delivery_id = ?').get(b.delivery_id) as Record<string, unknown> | undefined;
     if (d) {
@@ -533,7 +526,7 @@ function expandBilling(
     }
   }
 
-  // Upstream sales order + customer so `so -> bill` and `cust -> so` can render.
+
   if (b.sales_order_id) {
     const o = db.prepare('SELECT * FROM sales_orders WHERE sales_order_id = ?').get(b.sales_order_id) as Record<string, unknown> | undefined;
     if (o) {
@@ -550,7 +543,7 @@ function expandBilling(
     }
   }
 
-  // Products billed on this billing document.
+
   const items = db.prepare(
     `SELECT product_id
      FROM billing_items

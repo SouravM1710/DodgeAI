@@ -34,7 +34,7 @@ for (const f of files) {
             console.log('Fields: ' + Object.keys(obj).join(', '));
             console.log('Sample:', JSON.stringify(obj, null, 2));
         } catch (e) {
-            // CSV fallback
+
             console.log('Line 1: ' + lines[0]);
             if (lines[1]) console.log('Line 2: ' + lines[1]);
         }

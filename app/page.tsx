@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import ChatInterface from '@/components/ChatInterface';
 import { GraphNode, NODE_COLORS } from '@/lib/graph-types';
 
-// ForceGraph must be client-only
+
 const GraphVisualization = dynamic(() => import('@/components/GraphVisualization'), {
   ssr: false,
   loading: () => (
@@ -27,7 +27,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<Array<{ id: string; label: string; type: string; subtitle: string }>>([]);
   const [graphStats, setGraphStats] = useState<Record<string, number> | null>(null);
 
-  // Fetch stats for the header
+
   useEffect(() => {
     fetch('/api/graph?max=200')
       .then(r => r.json())
@@ -65,9 +65,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0e1a] overflow-hidden">
-      {/* Top navigation */}
+
       <header className="flex items-center gap-4 px-5 h-12 border-b border-[#1e2a40] bg-[#0d1117] z-20 flex-shrink-0">
-        {/* Logo */}
+
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#4f6ef7] to-[#8b5cf6] flex items-center justify-center">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
@@ -82,7 +82,7 @@ export default function Home() {
           <span className="text-[#64748b] text-sm">Knowledge Graph</span>
         </div>
 
-        {/* Search */}
+
         <div className="relative ml-4">
           <div className="flex items-center gap-2 bg-[#1a2035] border border-[#2a3350] rounded-lg px-3 py-1.5 w-64 focus-within:border-[#4f6ef7]/50 transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
@@ -96,7 +96,7 @@ export default function Home() {
             />
           </div>
 
-          {/* Search dropdown */}
+
           {searchResults.length > 0 && (
             <div className="absolute top-full left-0 mt-1 w-64 bg-[#111827] border border-[#2a3350] rounded-xl shadow-2xl overflow-hidden z-30">
               {searchResults.map(r => (
@@ -118,7 +118,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Focus breadcrumb */}
+
         {focusId && (
           <div className="flex items-center gap-2 bg-[#4f6ef7]/20 border border-[#4f6ef7]/40 rounded-lg px-3 py-1">
             <span className="text-xs text-[#4f6ef7]">Focused: {focusId}</span>
@@ -126,7 +126,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Compact stat badges in header */}
+
         {graphStats && (
           <div className="flex items-center gap-1.5 ml-4">
             {Object.entries(graphStats).map(([key, val]) => {
@@ -167,9 +167,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main content */}
+
       <div className="flex flex-1 min-h-0">
-        {/* Graph panel */}
+
         <div className="flex-1 min-w-0 relative">
           <GraphVisualization
             highlightIds={highlightIds}
@@ -177,7 +177,7 @@ export default function Home() {
             focusId={focusId}
           />
 
-          {/* Expand/focus hint when node selected */}
+
           {selectedNode && !focusId && (
             <div className="absolute bottom-14 right-3 z-10">
               <button
@@ -190,7 +190,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Chat sidebar */}
+
         {sidebarOpen && (
           <div className="w-[340px] flex-shrink-0 border-l border-[#1e2a40] flex flex-col overflow-hidden">
             <ChatInterface onHighlight={handleHighlight} />

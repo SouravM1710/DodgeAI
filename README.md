@@ -180,7 +180,7 @@ vercel
 
 1. Push to GitHub
 2. Import at [vercel.com/new](https://vercel.com/new)
-3. Add `GEMINI_API_KEY` under Environment Variables
+3. Add `GROK_API_KEY` under Environment Variables
 4. Set Build Command to: `npm run seed && next build`
 5. Deploy
 

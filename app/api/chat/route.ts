@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ answer: 'Please enter a question.', type: 'error' });
     }
 
-    // Step 1: Classify and generate SQL
+
     const llmResponse = await classifyAndGenerateSQL(message, SCHEMA_DESCRIPTION, history);
 
     if (llmResponse.type === 'off_topic') {
@@ -51,25 +51,21 @@ export async function POST(req: NextRequest) {
       } as ChatResponse);
     }
 
-    // Step 2: Execute SQL (type === 'sql')
+
     const db = getDb();
     let results: Record<string, unknown>[] = [];
     let sqlError: string | null = null;
 
     try {
-      // Security: only allow SELECT statements
+
       const cleanSQL = llmResponse.query
         .trim()
-        // allow models to include trailing semicolons
         .replace(/;+\s*$/, '');
 
-      // SQLite supports CTEs: `WITH ... SELECT ...`
-      // Also be tolerant of leading whitespace/newlines.
       if (!/^\s*(SELECT|WITH)\s/i.test(cleanSQL)) {
         throw new Error('Only SELECT (and WITH/CTE) queries are permitted.');
       }
 
-      // Prevent multi-statement SQL (e.g. `SELECT ...; SELECT ...`)
       if (cleanSQL.includes(';')) {
         throw new Error('Only a single SQL statement is permitted.');
       }
@@ -81,7 +77,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (sqlError) {
-      // Try to give a helpful fallback
       return NextResponse.json({
         answer: `I encountered an issue executing that query: ${sqlError}. Please try rephrasing your question.`,
         sql: llmResponse.query,
@@ -89,16 +84,14 @@ export async function POST(req: NextRequest) {
       } as ChatResponse);
     }
 
-    // Step 3: Format results into natural language
     const answer = await formatQueryResult(message, llmResponse.query, results, llmResponse.explanation);
 
-    // Step 4: Extract entity IDs for graph highlighting
     const highlightIds = extractHighlightIds(results);
 
     return NextResponse.json({
       answer,
       sql: llmResponse.query,
-      results: results.slice(0, 50), // cap at 50 for payload size
+      results: results.slice(0, 50),
       rowCount: results.length,
       type: 'sql',
       highlightIds,
@@ -113,7 +106,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/** Extract entity IDs from query results to highlight in graph */
+
 function extractHighlightIds(results: Record<string, unknown>[]): string[] {
   const ids: string[] = [];
   const idFields = {

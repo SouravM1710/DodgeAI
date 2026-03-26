@@ -1,8 +1,4 @@
-/**
- * LLM integration using Groq (free tier, no billing required).
- * Get a free API key at https://console.groq.com
- * Model: llama-3.3-70b-versatile — excellent at text-to-SQL, free tier.
- */
+
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
@@ -83,14 +79,14 @@ Respond with a single JSON object only. No markdown fences, no explanation outsi
 
     const raw = await callGroq(systemPrompt, userPrompt);
 
-    // Strip markdown fences if model wrapped the JSON anyway
+
     const cleaned = raw
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
       .trim();
 
-    // Extract JSON even if there's surrounding text
+
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON found in response');
 
@@ -138,7 +134,7 @@ Answer the question using this data:`;
     const answer = await callGroq(systemPrompt, userPrompt);
     return answer.trim();
   } catch {
-    // Fallback plain text
+
     if (results.length === 0) return 'No results found.';
     const keys = Object.keys(results[0]);
     const lines = results.slice(0, 10).map(r => keys.map(k => `${k}: ${r[k]}`).join(' | '));

@@ -74,7 +74,6 @@ export default function ChatInterface({ onHighlight }: Props) {
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // Highlight graph nodes
       if (data.highlightIds && data.highlightIds.length > 0) {
         onHighlight?.(data.highlightIds);
       }
@@ -100,7 +99,7 @@ export default function ChatInterface({ onHighlight }: Props) {
 
   return (
     <div className="flex flex-col h-full bg-[#0d1117]">
-      {/* Header */}
+
       <div className="px-4 py-3 border-b border-[#1e2a40] flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4f6ef7] to-[#8b5cf6] flex items-center justify-center text-white text-xs font-bold">
           AI
@@ -115,12 +114,12 @@ export default function ChatInterface({ onHighlight }: Props) {
         </div>
       </div>
 
-      {/* Messages */}
+
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((msg, i) => (
           <div key={i} className={`msg-animate flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[88%] ${msg.role === 'user' ? '' : ''}`}>
-              {/* Role indicator for assistant */}
+
               {msg.role === 'assistant' && (
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#4f6ef7] to-[#8b5cf6] flex items-center justify-center text-[8px] font-bold text-white">AI</div>
@@ -134,7 +133,7 @@ export default function ChatInterface({ onHighlight }: Props) {
                 </div>
               )}
 
-              {/* Bubble */}
+
               <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-[#4f6ef7] text-white rounded-tr-sm'
@@ -146,14 +145,14 @@ export default function ChatInterface({ onHighlight }: Props) {
               }`}>
                 <p className="whitespace-pre-wrap">{msg.content}</p>
 
-                {/* Row count badge */}
+
                 {msg.rowCount !== undefined && (
                   <p className="mt-2 text-[11px] text-[#4f6ef7] font-medium">
                     {msg.rowCount} {msg.rowCount === 1 ? 'record' : 'records'} found
                   </p>
                 )}
 
-                {/* Results preview table */}
+
                 {msg.results && msg.results.length > 0 && (
                   <div className="mt-3 overflow-x-auto rounded-lg border border-[#2a3350]">
                     <table className="chat-table">
@@ -182,7 +181,7 @@ export default function ChatInterface({ onHighlight }: Props) {
                   </div>
                 )}
 
-                {/* SQL toggle */}
+
                 {msg.sql && (
                   <button
                     onClick={() => setShowSQL(showSQL === `${i}` ? null : `${i}`)}
@@ -197,7 +196,7 @@ export default function ChatInterface({ onHighlight }: Props) {
                 )}
               </div>
 
-              {/* Timestamp */}
+
               <p suppressHydrationWarning className={`text-[10px] text-[#3a4a70] mt-1 ${msg.role === 'user' ? 'text-right' : ''}`}>
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
               </p>
@@ -205,7 +204,7 @@ export default function ChatInterface({ onHighlight }: Props) {
           </div>
         ))}
 
-        {/* Typing indicator */}
+
         {loading && (
           <div className="flex justify-start">
             <div className="bg-[#1a2035] border border-[#2a3350] rounded-2xl rounded-tl-sm px-4 py-3">
@@ -221,7 +220,7 @@ export default function ChatInterface({ onHighlight }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Example queries */}
+
       {messages.length <= 1 && (
         <div className="px-4 pb-3">
           <p className="text-[10px] text-[#3a4a70] font-semibold uppercase tracking-wider mb-2">Try asking</p>
@@ -239,7 +238,7 @@ export default function ChatInterface({ onHighlight }: Props) {
         </div>
       )}
 
-      {/* Input */}
+
       <div className="px-4 pb-4 pt-2 border-t border-[#1e2a40]">
         <div className="flex items-end gap-2 bg-[#1a2035] border border-[#2a3350] rounded-xl px-3 py-2 focus-within:border-[#4f6ef7]/60 transition-colors">
           <textarea

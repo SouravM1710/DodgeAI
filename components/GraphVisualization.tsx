@@ -19,12 +19,12 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
 
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  // Load ForceGraph dynamically (no SSR)
+
   useEffect(() => {
     import('react-force-graph-2d').then(m => setForceGraph(() => m.default));
   }, []);
 
-  // Track container size
+
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver(entries => {
@@ -35,7 +35,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
     return () => ro.disconnect();
   }, []);
 
-  // Fetch graph data
+
   useEffect(() => {
     setLoading(true);
     const url = focusId ? `/api/graph?focus=${encodeURIComponent(focusId)}` : '/api/graph?max=200';
@@ -53,7 +53,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
       const size = ((n.val || 3) * 2.5) + (isHighlighted ? 3 : 0) + (isSelected ? 4 : 0);
       const color = NODE_COLORS[n.type] || '#888';
 
-      // Glow for highlighted/selected
+
       if (isHighlighted || isSelected) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, size + 5, 0, 2 * Math.PI);
@@ -61,20 +61,20 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
         ctx.fill();
       }
 
-      // Main circle
+
       ctx.beginPath();
       ctx.arc(n.x, n.y, size, 0, 2 * Math.PI);
       ctx.fillStyle = isSelected ? '#ffffff' : color;
       ctx.fill();
 
-      // Border
+
       ctx.beginPath();
       ctx.arc(n.x, n.y, size, 0, 2 * Math.PI);
       ctx.strokeStyle = isHighlighted ? '#ffffff' : color + 'aa';
       ctx.lineWidth = isSelected ? 2 : 1;
       ctx.stroke();
 
-      // Label at reasonable zoom
+
       if (globalScale > 1.5 || isSelected || isHighlighted) {
         const label = n.label.length > 16 ? n.label.slice(0, 14) + '…' : n.label;
         ctx.font = `${isSelected ? 600 : 400} ${11 / globalScale}px Inter, sans-serif`;
@@ -117,11 +117,11 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
       if (!isActiveEndpoint) continue;
       nodeSet.add(s);
       nodeSet.add(t);
-      // stable-ish id: source + target + label
+
       linkSet.add(`${s}__${t}__${l.label}`);
     }
 
-    // Always keep active nodes themselves visible.
+
     for (const id of activeIds) nodeSet.add(id);
     return { nodeVisibilitySet: nodeSet, linkVisibilitySet: linkSet };
   }, [graphData, activeIds]);
@@ -182,7 +182,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
     <div ref={containerRef} className="relative w-full h-full bg-[#0a0e1a] overflow-hidden">
 
 
-      {/* Legend */}
+
       <div className="absolute bottom-3 left-3 z-10 bg-[#111827]/90 border border-[#2a3350] rounded-xl p-3 backdrop-blur-sm">
         <p className="text-[10px] text-[#64748b] font-semibold uppercase tracking-wider mb-2">Entity Types</p>
         <div className="space-y-1">
@@ -195,7 +195,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
         </div>
       </div>
 
-      {/* Node detail panel */}
+
       {selectedNode && (
         <div className="absolute top-3 right-3 z-10 w-72 bg-[#111827]/95 border border-[#2a3350] rounded-xl p-4 backdrop-blur-sm shadow-2xl">
           <div className="flex items-center justify-between mb-3">
@@ -234,7 +234,6 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
         </div>
       )}
 
-      {/* Graph */}
       {ForceGraph && graphData && (
         // @ts-expect-error dynamic import
         <ForceGraph
@@ -285,7 +284,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
         />
       )}
 
-      {/* Hint */}
+
       <div className="absolute bottom-3 right-3 z-10 text-[10px] text-[#3a4a70]">
         Click node to inspect • Scroll to zoom • Drag to pan
       </div>

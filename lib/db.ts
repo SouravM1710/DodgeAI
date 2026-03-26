@@ -9,7 +9,7 @@ let _db: Database.Database | null = null;
 export function getDb(): Database.Database {
   if (_db) return _db;
   
-  // Ensure data directory exists
+
   const dataDir = path.join(process.cwd(), 'data');
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
@@ -145,7 +145,7 @@ export function initSchema(db: Database.Database) {
       FOREIGN KEY (billing_id) REFERENCES billing_documents(billing_id)
     );
 
-    -- Indexes for performance
+
     CREATE INDEX IF NOT EXISTS idx_so_customer ON sales_orders(customer_id);
     CREATE INDEX IF NOT EXISTS idx_del_so ON deliveries(sales_order_id);
     CREATE INDEX IF NOT EXISTS idx_bill_so ON billing_documents(sales_order_id);
