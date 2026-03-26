@@ -220,10 +220,10 @@ function buildOverviewGraph(
     : [];
 
   const productIds = Array.from(new Set([
-    ...soItemRows.map(r => r.product_id ? String(r.product_id) : null).filter(Boolean),
-    ...delItemRows.map(r => r.product_id ? String(r.product_id) : null).filter(Boolean),
-    ...billItemRows.map(r => r.product_id ? String(r.product_id) : null).filter(Boolean),
-  ])).slice(0, productsLimit);
+    ...soItemRows.map(r => r.product_id ? String(r.product_id) : null),
+    ...delItemRows.map(r => r.product_id ? String(r.product_id) : null),
+    ...billItemRows.map(r => r.product_id ? String(r.product_id) : null),
+  ].filter((x): x is string => x !== null))).slice(0, productsLimit);
 
   if (productIds.length > 0) {
     const productRows = db.prepare(
