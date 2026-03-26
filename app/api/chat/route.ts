@@ -123,5 +123,5 @@ function extractHighlightIds(results: Record<string, unknown>[]): string[] {
     }
   }
 
-  return [...new Set(ids)].slice(0, 30);
+  return Array.from(new Set(ids)).slice(0, 30);
 }
