@@ -11,7 +11,8 @@ interface Props {
 
 export default function GraphVisualization({ highlightIds = [], onNodeSelect, focusId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ForceGraph, setForceGraph] = useState<unknown>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [ForceGraph, setForceGraph] = useState<any>(null);
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
