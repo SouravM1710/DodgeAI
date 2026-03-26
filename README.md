@@ -256,5 +256,5 @@ order-to-cash/
 | Styling | Tailwind CSS |
 | Graph Viz | react-force-graph-2d |
 | Database | SQLite via better-sqlite3 |
-| LLM | Google Gemini 1.5 Flash |
+| LLM | GROK |
 | Hosting | Vercel |
