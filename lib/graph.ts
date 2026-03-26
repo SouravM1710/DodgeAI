@@ -340,7 +340,7 @@ function expandDelivery(
      LIMIT ?`
   ).all(deliveryId, Math.min(400, maxNodes * 2)) as Array<Record<string, unknown>>;
 
-  const productIds = Array.from(new Set(items.map(it => (it.product_id ? String(it.product_id) : null)).filter(Boolean))).slice(0, Math.max(10, Math.floor(maxNodes * 0.25)));
+  const productIds = Array.from(new Set(items.map(it => (it.product_id ? String(it.product_id) : null)).filter((x): x is string => x !== null))).slice(0, Math.max(10, Math.floor(maxNodes * 0.25)));
   if (productIds.length > 0) {
     const productRows = db.prepare(
       `SELECT * FROM products WHERE product_id IN (${placeholders(productIds.length)})`
@@ -487,7 +487,7 @@ function expandOrder(
      LIMIT 200`
   ).all(o.sales_order_id as string) as Array<Record<string, unknown>>;
 
-  const productIds = Array.from(new Set(items.map(it => (it.product_id ? String(it.product_id) : null)).filter(Boolean)));
+  const productIds = Array.from(new Set(items.map(it => (it.product_id ? String(it.product_id) : null)).filter((x): x is string => x !== null)));
   if (productIds.length > 0) {
     const productRows = db.prepare(
       `SELECT * FROM products WHERE product_id IN (${placeholders(productIds.length)})`
@@ -551,7 +551,7 @@ function expandBilling(
      LIMIT 200`
   ).all(b.billing_id as string) as Array<Record<string, unknown>>;
 
-  const productIds = Array.from(new Set(items.map(it => (it.product_id ? String(it.product_id) : null)).filter(Boolean)));
+  const productIds = Array.from(new Set(items.map(it => (it.product_id ? String(it.product_id) : null)).filter((x): x is string => x !== null)));
   if (productIds.length > 0) {
     const productRows = db.prepare(
       `SELECT * FROM products WHERE product_id IN (${placeholders(productIds.length)})`
