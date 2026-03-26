@@ -47,7 +47,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
 
   const nodeCanvasObject = useCallback(
     (node: Record<string, unknown>, ctx: CanvasRenderingContext2D, globalScale: number) => {
-      const n = node as GraphNode & { x: number; y: number };
+      const n = node as unknown as GraphNode & { x: number; y: number };
       const isHighlighted = highlightIds.includes(n.id);
       const isSelected = selectedNode?.id === n.id;
       const size = ((n.val || 3) * 2.5) + (isHighlighted ? 3 : 0) + (isSelected ? 4 : 0);
@@ -88,7 +88,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
   );
 
   const handleNodeClick = useCallback((node: Record<string, unknown>) => {
-    const n = node as GraphNode;
+    const n = node as unknown as GraphNode;
     setSelectedNode(prev => prev?.id === n.id ? null : n);
     onNodeSelect?.(n);
   }, [onNodeSelect]);
@@ -122,7 +122,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
     }
 
 
-    for (const id of activeIds) nodeSet.add(id);
+    activeIds.forEach(id => nodeSet.add(id));
     return { nodeVisibilitySet: nodeSet, linkVisibilitySet: linkSet };
   }, [graphData, activeIds]);
 
@@ -141,7 +141,7 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
   const nodeVisibility = useCallback(
     (node: Record<string, unknown>) => {
       if (!nodeVisibilitySet) return true;
-      const n = node as GraphNode;
+      const n = node as unknown as GraphNode;
       return nodeVisibilitySet.has(n.id);
     },
     [nodeVisibilitySet]
@@ -235,14 +235,14 @@ export default function GraphVisualization({ highlightIds = [], onNodeSelect, fo
       )}
 
       {ForceGraph && graphData && (
-        // @ts-expect-error dynamic import
+        // @ts-ignore
         <ForceGraph
           graphData={graphData}
           width={dimensions.width}
           height={dimensions.height}
           backgroundColor="#0a0e1a"
           nodeLabel={(node: Record<string, unknown>) => {
-            const n = node as GraphNode;
+            const n = node as unknown as GraphNode;
             return `${NODE_LABELS[n.type]}: ${n.label}`;
           }}
           nodeCanvasObject={nodeCanvasObject}
