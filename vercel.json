@@ -1,0 +1,15 @@
+{
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/chat/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/graph/route.ts": {
+      "maxDuration": 15
+    },
+    "app/api/graph-data/route.ts": {
+      "maxDuration": 10
+    }
+  }
+}

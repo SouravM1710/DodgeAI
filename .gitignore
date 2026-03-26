@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NOTE: data/otc.db is intentionally NOT ignored.
+# After running `npx tsx scripts/seed.ts`, commit the .db file
+# so Vercel can bundle it for deployment.
+# data/otc.db   ← keep this commented out
+data/raw/       # Raw CSVs don't need to be in git
